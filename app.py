@@ -4,7 +4,7 @@ import pymysql
 app = Flask(__name__)
 
 # MySQL DB config (replace with your EC2 DB private IP)
-DB_HOST = "localhost"
+DB_HOST = "terraform-20250924152041582400000007.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
 DB_USER = "Application"
 DB_PASS = "Application"
 DB_NAME = "Application"
