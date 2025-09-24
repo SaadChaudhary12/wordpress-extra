@@ -5,9 +5,9 @@ app = Flask(__name__)
 
 # MySQL DB config (replace with your EC2 DB private IP)
 DB_HOST = "localhost"
-DB_USER = "appuser"
-DB_PASS = "app_pass"
-DB_NAME = "itemsdb"
+DB_USER = "Application"
+DB_PASS = "Application"
+DB_NAME = "Application"
 
 def get_connection():
     return pymysql.connect(
