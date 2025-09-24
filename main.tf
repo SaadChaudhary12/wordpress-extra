@@ -74,15 +74,6 @@ resource "aws_instance" "this" {
                     sudo yum update -y
                     sudo yum install -y python3 git
                     sudo yum install -y python3-pip
-
-                    cd /home/ec2-user
-                    git clone https://SaadChaudhary12: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/SaadChaudhary12/wordpress-extra.git
-                    git clone https://github.com/SaadChaudhary12/wordpress-extra.git
-                    cd wordpress-infra
-
-                    sudo pip3 install -r requirements.txt
-
-                    nohup python3 app.py > app.log 2>&1 &
                 EOT
 
 
