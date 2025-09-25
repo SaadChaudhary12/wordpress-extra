@@ -5,10 +5,10 @@ import os
 app = Flask(__name__)
 
 
-DB_HOST = "terraform-20250925092622816900000006.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
-DB_USER = "Application"
-DB_PASS = "Application"
-DB_NAME = "Application"
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_NAME = os.getenv("DB_NAME")
 
 
 def get_connection():

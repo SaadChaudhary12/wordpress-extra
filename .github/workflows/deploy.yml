@@ -1,34 +1,34 @@
-name: Deploy to EC2
+# name: Deploy to EC2
 
-on:
-  push:
-    branches:
-      - main
+# on:
+#   push:
+#     branches:
+#       - main
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout repo
+#         uses: actions/checkout@v4
 
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.7.0
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+#       - name: Setup SSH agent
+#         uses: webfactory/ssh-agent@v0.7.0
+#         with:
+#           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Test SSH Connection
-        run: ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} "echo Connected successfully!"
+#       - name: Test SSH Connection
+#         run: ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} "echo Connected successfully!"
 
-      - name: Install Python deps and restart service
-        run: |
-          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
-            sudo pkill -f "python3 app.py" || true
-            cd /home/ec2-user/wordpress-extra
-            sudo pip3 install -r requirements.txt
-            nohup python3 app.py > app.log 2>&1 &
-          EOF
+#       - name: Install Python deps and restart service
+#         run: |
+#           ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+#             sudo pkill -f "python3 app.py" || true
+#             cd /home/ec2-user/wordpress-extra
+#             sudo pip3 install -r requirements.txt
+#             nohup python3 app.py > app.log 2>&1 &
+#           EOF
 
 
 

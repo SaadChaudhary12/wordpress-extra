@@ -77,6 +77,10 @@ resource "aws_instance" "this" {
             # Update system
             sudo yum update -y
 
+            sudo yum install -y mariadb105-server
+            sudo systemctl start mariadb
+            sudo systemctl enable mariadb
+
             # Install dependencies
             sudo yum install -y python3 git
             sudo yum install -y python3-pip
@@ -86,35 +90,7 @@ resource "aws_instance" "this" {
             if [ ! -d "wordpress-extra" ]; then
               git clone https://github.com/SaadChaudhary12/wordpress-extra.git
             fi
-            cd wordpress-extra
 
-            # Install Python requirements
-            sudo pip3 install -r requirements.txt
-
-            # Create systemd service for Flask app
-            sudo bash -c 'cat > /etc/systemd/system/flask.service <<EOF
-            [Unit]
-            Description=Flask Application
-            After=network.target
-
-            [Service]
-            User=ec2-user
-            WorkingDirectory=/home/ec2-user/wordpress-extra
-            ExecStart=/usr/bin/python3 /home/ec2-user/wordpress-extra/app.py
-            Restart=always
-            Environment="DB_HOST=terraform-20250925092622816900000006.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
-            Environment="DB_USER=Application"
-            Environment="DB_PASS=Application"
-            Environment="DB_NAME=Application"
-
-            [Install]
-            WantedBy=multi-user.target
-            EOF'
-
-            # Reload systemd and start service
-            sudo systemctl daemon-reexec
-            sudo systemctl enable flask
-            sudo systemctl start flask
   EOT
 
 
@@ -166,11 +142,11 @@ resource "aws_lb" "main" {
 resource "aws_lb_target_group" "main" {
   vpc_id      = module.vpc.vpc_id
   name        = local.target_group_name
-  port        = 80
+  port        = 8000
   protocol    = "HTTP"
   
   health_check {
-    path                = "/"
+    path                = "/items"
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
