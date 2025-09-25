@@ -24,10 +24,12 @@ jobs:
       - name: Install Python deps and restart service
         run: |
           ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
-            sudo pip3 install -r /home/ec2-user/wordpress-extra/requirements.txt
+            sudo pkill -f "python3 app.py" || true
             cd /home/ec2-user/wordpress-extra
+            sudo pip3 install -r requirements.txt
             nohup python3 app.py > app.log 2>&1 &
           EOF
+
 
 
 

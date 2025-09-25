@@ -1,13 +1,15 @@
 from flask import Flask, request, jsonify
 import pymysql
+import os
 
 app = Flask(__name__)
 
-# MySQL DB config (replace with your EC2 DB private IP)
-DB_HOST = "terraform-20250924152041582400000007.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
+
+DB_HOST = "terraform-20250925092622816900000006.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
 DB_USER = "Application"
 DB_PASS = "Application"
 DB_NAME = "Application"
+
 
 def get_connection():
     return pymysql.connect(
