@@ -14,7 +14,9 @@ output "public_subnets" {
   value = module.vpc.public_subnets
 }
 
-
+output "rds_endpoint" {
+  value = aws_db_instance.main.endpoint
+}
 
 
 
