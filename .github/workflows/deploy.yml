@@ -24,10 +24,6 @@ jobs:
             cd /home/ec2-user/wordpress-extra
             git pull
             sudo pip3 install -r requirements.txt
-            export DB_HOST=terraform-20250925105456042000000007.ci6pixnrgmml.us-east-1.rds.amazonaws.com
-            export DB_USER=Application
-            export DB_PASS=Application
-            export DB_NAME=Application
             sudo pkill -f "python3 app.py" || true
             nohup python3 app.py > app.log 2>&1 &
           EOF

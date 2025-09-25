@@ -91,6 +91,8 @@ resource "aws_instance" "this" {
               git clone https://github.com/SaadChaudhary12/wordpress-extra.git
             fi
 
+            cd wordpress-extra
+
   EOT
 
 
