@@ -1,14 +1,13 @@
 from flask import Flask, request, jsonify
 import pymysql
-import os
 
 app = Flask(__name__)
 
 
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASS = os.getenv("DB_PASS")
-DB_NAME = os.getenv("DB_NAME")
+DB_HOST = "terraform-20250925105456042000000007.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
+DB_USER = "Application"
+DB_PASS = "Application"
+DB_NAME = "Application"
 
 
 def get_connection():
