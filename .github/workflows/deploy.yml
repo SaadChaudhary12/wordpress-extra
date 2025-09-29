@@ -26,8 +26,14 @@ jobs:
             sudo pip3 install -r requirements.txt
             sudo pkill -f "python3 app.py" || true
             nohup python3 app.py > app.log 2>&1 &
+            sleep 10
+            PORT=$(grep -oP 'Running on port \K[0-9]+' app.log | tail -1)
+            echo "Flask started on port: $PORT"
           EOF
+
+
           
+
 # name: Deploy to EC2
 
 # on:
