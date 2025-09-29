@@ -27,11 +27,7 @@ jobs:
             sudo pkill -f "python3 app.py" || true
             nohup python3 app.py > app.log 2>&1 &
           EOF
-
-
-
           
-
 # name: Deploy to EC2
 
 # on:
