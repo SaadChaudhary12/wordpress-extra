@@ -13,7 +13,7 @@ locals {
   target_group_name   = "WP-ALB-TG" 
   ami_id              = "ami-08982f1c5bf93d976"
   instance_type       = "t2.micro"                
-  key_name            = "Key-CICD"    
+  key_name            = "Saadie-Test"    
   allowed_ssh_cidr    = "0.0.0.0/0"  
   storage             = "20" 
   engine_version      = "8.0"
