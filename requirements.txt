@@ -1,16 +1,2 @@
 flask
 pymysql
-
-
-
-# mysql -h <your-rds-endpoint> -u admin -p
-# CREATE DATABASE Application;
-# CREATE USER 'Application'@'%' IDENTIFIED BY 'Application';
-# GRANT ALL PRIVILEGES ON itemsdb.* TO 'Application'@'%';
-# FLUSH PRIVILEGES;
-# USE Application;
-# CREATE TABLE items (
-#     id INT AUTO_INCREMENT PRIMARY KEY,
-#     name VARCHAR(255),
-#     quantity INT
-# );

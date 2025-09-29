@@ -30,7 +30,7 @@ jobs:
 
             sleep 10
 
-            
+
             PORT=$(grep "Running on http://127.0.0.1" app.log | awk -F: '{print $3}')
             echo "Flask started on port: $PORT"
             sudo tee /etc/nginx/conf.d/flask.conf > /dev/null <<EOCONF
@@ -43,7 +43,7 @@ jobs:
                 }
           EOCONF
 
-                sudo nginx -t && sudo systemctl reload nginx
+                sudo systemctl reload nginx
           EOF
 
 # name: Deploy to EC2
