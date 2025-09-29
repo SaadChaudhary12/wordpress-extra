@@ -33,7 +33,7 @@ jobs:
 
             PORT=$(grep "Running on http://127.0.0.1" app.log | awk -F: '{print $3}')
             echo "Flask started on port: $PORT"
-            sudo tee /etc/nginx/conf.d/flask.conf > /dev/null <<EOCONF
+            sudo tee /etc/nginx/conf.d/flask.conf <<EOCONF
                 server {
                     listen 80;
                     server_name _;
