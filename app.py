@@ -43,5 +43,13 @@ def add_item():
     return jsonify({"message": "Item added successfully"}), 201
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=0)
+    # Bind to a random port first
+    s = socket.socket()
+    s.bind(('', 0))                 # OS assigns free port
+    port = s.getsockname()[1]       # capture assigned port
+    s.close()
+
+    print(f"Running on port {port}", flush=True)   # important for logs
+
+    app.run(host="0.0.0.0", port=port)
 
