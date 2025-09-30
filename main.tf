@@ -1,5 +1,5 @@
 ################################################################################
-# VPC FULL SET-UP
+# AVAILABILITY ZONES
 ################################################################################
 
 data "aws_availability_zones" "available" {
@@ -9,6 +9,10 @@ data "aws_availability_zones" "available" {
   }
 }
 
+################################################################################
+# VPC
+################################################################################
+
 resource "aws_vpc" "main" {
   cidr_block = local.vpc_cidr
   enable_dns_support = true
@@ -17,6 +21,10 @@ resource "aws_vpc" "main" {
     Name = local.name
   }
 }
+
+################################################################################
+# PUBLIC-SUBNETS
+################################################################################
 
 resource "aws_subnet" "public_subnets" {
   count                         = length(local.public_subnets)
@@ -30,6 +38,10 @@ resource "aws_subnet" "public_subnets" {
   }
 } 
 
+################################################################################
+# PRIVATE-SUBNETS
+################################################################################
+
 resource "aws_subnet" "private_subnets" {
   count                         = length(local.private_subnets)
   vpc_id                        = aws_vpc.main.id
@@ -42,6 +54,10 @@ resource "aws_subnet" "private_subnets" {
   }
 } 
 
+################################################################################
+# INTERNET-GATEWAY
+################################################################################
+
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
 
@@ -50,6 +66,10 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
+################################################################################
+# ELATIC-IP
+################################################################################
+
 resource "aws_eip" "nat" {
 
   tags = {
@@ -57,6 +77,9 @@ resource "aws_eip" "nat" {
   }
 }
 
+################################################################################
+# NAT-GATEWAY
+################################################################################
 
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat.allocation_id
@@ -68,6 +91,10 @@ resource "aws_nat_gateway" "nat" {
 
   depends_on = [aws_internet_gateway.igw]
 }
+
+################################################################################
+# PUBLIC-ROUTE-TABLE
+################################################################################
 
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
@@ -82,6 +109,10 @@ resource "aws_route_table" "public" {
   }
 }
 
+################################################################################
+# PRIVATE-ROUTE-TABLE
+################################################################################
+
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
@@ -95,11 +126,19 @@ resource "aws_route_table" "private" {
   }
 }
 
+################################################################################
+# PUBLIC-ROUTE-TABLE-ASSOCIATION
+################################################################################
+
 resource "aws_route_table_association" "public" {
   count          = length(aws_subnet.public_subnets)
   subnet_id      = aws_subnet.public_subnets[count.index].id
   route_table_id = aws_route_table.public.id
 }
+
+################################################################################
+# PRIVATE-ROUTE-TABLE-ASSOCIATION
+################################################################################
 
 resource "aws_route_table_association" "private" {
   count          = length(aws_subnet.private_subnets)
@@ -109,19 +148,22 @@ resource "aws_route_table_association" "private" {
 
 
 ################################################################################
-# RDS FOR FLASK APPLICATION
+# DATA-BASE-SUBNET-GROUP
 ################################################################################
 
 resource "aws_db_subnet_group" "mains" {
-  name        = "main-subnet-group1"
+  name        = local.db_subnet_gn
   subnet_ids  = aws_subnet.private_subnets[*].id
 }
 
+################################################################################
+# RDS FOR FLASK APPLICATION
+################################################################################
 
 resource "aws_db_instance" "main" {
   allocated_storage    = local.storage
   skip_final_snapshot = true
-  engine               = "mysql"
+  engine               = local.engine
   engine_version       = local.engine_version
   instance_class       = local.instance_class
   db_name              = local.db_name
@@ -129,7 +171,7 @@ resource "aws_db_instance" "main" {
   password             = local.password
   publicly_accessible  = false
   vpc_security_group_ids = [aws_security_group.db_sg.id]
-  db_subnet_group_name = aws_db_subnet_group.mains.name
+  db_subnet_group_name = local.db_subnet_gn
 }
 
 ################################################################################
@@ -145,6 +187,7 @@ resource "aws_instance" "this" {
   vpc_security_group_ids = [aws_security_group.web_sg.id]
 
   user_data = <<-EOT
+
             #!/bin/bash
             set -e
 
@@ -170,6 +213,23 @@ resource "aws_instance" "this" {
             fi
 
             cd wordpress-extra
+
+            sudo chown -R ec2-user:ec2-user /home/ec2-user/wordpress-extra
+
+            DB_ENDPOINT="${aws_db_instance.main.endpoint}"
+            DB_USER="Application"
+            DB_PASS="Application"
+            DB_NAME="Application"
+
+            mysql -h $DB_ENDPOINT -u $DB_USER -p$DB_PASS $DB_NAME <<MYSQL_SCRIPT
+
+            CREATE TABLE IF NOT EXISTS items (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              name VARCHAR(100),
+              quantity INT
+            );
+            
+            MYSQL_SCRIPT
 
   EOT
 
@@ -211,7 +271,7 @@ resource "aws_instance" "this" {
 resource "aws_lb" "main" {
   name                        = local.lb_name
   internal                    = false
-  load_balancer_type          = "application"
+  load_balancer_type          = local.lbt
   security_groups             = [aws_security_group.lb_sg.id]
   subnets                     = aws_subnet.public_subnets[*].id
   enable_deletion_protection  = false
@@ -245,14 +305,19 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-################################################################################
-# SECURITY-GROUPS
-################################################################################
+resource "aws_lb_target_group_attachment" "main" {
+  target_group_arn = aws_lb_target_group.main.arn
+  target_id        = aws_instance.this.id
+  port             = 80
+}
 
+################################################################################
+# SECURITY-GROUP FOR LOAD-BALANCER
+################################################################################
 
 resource "aws_security_group" "lb_sg" {     
   vpc_id      = aws_vpc.main.id
-  name_prefix = "lb-sg"
+  name_prefix = local.name_prefix_lb
   ingress {
     from_port   = 80
     to_port     = 80
@@ -267,9 +332,13 @@ resource "aws_security_group" "lb_sg" {
   }
 }
 
+################################################################################
+# SECURITY-GROUP FOR APPLICATION / EC2
+################################################################################
+
 resource "aws_security_group" "web_sg" {
   vpc_id            = aws_vpc.main.id
-  name_prefix       = "App-sg"
+  name_prefix       = local.name_prefix_web
   ingress {
     from_port       = 80
     to_port         = 80
@@ -284,14 +353,14 @@ resource "aws_security_group" "web_sg" {
     protocol         = "tcp"
     security_groups  = [aws_security_group.lb_sg.id]
   }
-    # Allow SSH traffic
+
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-    # Allow ALL inbound traffic
+
   ingress {
     from_port   = 0
     to_port     = 0
@@ -306,9 +375,13 @@ resource "aws_security_group" "web_sg" {
   }
 }
 
+################################################################################
+# SECURITY-GROUP FOR DATA-BASE
+################################################################################
+
 resource "aws_security_group" "db_sg" {
   vpc_id = aws_vpc.main.id
-  name   = "db-sg"
+  name   = local.name_prefix_db
 
   ingress {
     from_port       = 3306
@@ -324,3 +397,7 @@ resource "aws_security_group" "db_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+################################################################################
+# END
+################################################################################
