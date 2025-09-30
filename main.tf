@@ -19,7 +19,7 @@ module "vpc" {
   vpc_cidr         = local.vpc_cidr
   public_subnets   = local.public_subnets
   private_subnets  = local.private_subnets
-  route_table_cidr = "0.0.0.0/0"
+  route_table_cidr = local.route_table_cidr
 }
 
 ################################################################################
@@ -57,8 +57,8 @@ module "alb" {
   subnet_ids        = module.vpc.public_ids
   vpc_id            = module.vpc.vpc_id
   target_group_name = local.target_group_name
-  app_port          = 80
-  health_check_path = "/items"
+  app_port          = local.app_port
+  health_check_path = local.health_check_path
   instance_id       = aws_instance.this.id
 }
 
@@ -127,7 +127,6 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # (⚠️ remove this if you don’t want to allow everything)
   ingress {
     from_port   = 0
     to_port     = 0

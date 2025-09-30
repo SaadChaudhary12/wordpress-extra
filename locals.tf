@@ -12,6 +12,8 @@ locals {
   route_table_cidr    = "0.0.0.0/0"
   lb_name             = "WP-ALB"  
   lbt                 = "application"
+  health_check_path   = "/items"
+  app_port            = 80
   name_prefix_lb      = "lb-sg"
   name_prefix_web     = "App-sg"
   name_prefix_db      = "db-sg"
