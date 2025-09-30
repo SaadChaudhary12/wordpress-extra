@@ -27,9 +27,7 @@ jobs:
             sudo pkill -f "python3 app.py" || true
             nohup python3 app.py > app.log 2>&1 &
 
-
             sleep 10
-
 
             PORT=$(grep "Running on http://127.0.0.1" app.log | awk -F: '{print $3}')
             echo "Flask started on port: $PORT"
@@ -45,4 +43,3 @@ jobs:
 
                 sudo systemctl reload nginx
           EOF
-          
