@@ -3,20 +3,22 @@
 ################################################################################
 
 output "vpc_id" {
-  value = aws_vpc.main.id
+  value = module.vpc.id
 }
 
 output "private_subnets" {
-  value = aws_subnet.private_subnets[*].id
+  value = module.subnets.private_ids
 }
 
 output "public_subnets" {
-  value = aws_subnet.public_subnets[*].id
+  value = module.subnets.public_ids
 }
 
 output "rds_endpoint" {
-  value = aws_db_instance.main.endpoint
+  value = module.rds.endpoint
 }
+
+
 
 
 
