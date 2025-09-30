@@ -39,7 +39,7 @@ module "vpc" {
 ################################################################################
 
 resource "aws_db_subnet_group" "mains" {
-  name        = "main-subnet-group12"
+  name        = "main-subnet-group1"
   subnet_ids  = module.vpc.private_subnets
 }
 
@@ -55,7 +55,7 @@ resource "aws_db_instance" "main" {
   password             = local.password
   publicly_accessible  = false
   vpc_security_group_ids = [aws_security_group.db_sg.id]
-  db_subnet_group_name = "main-subnet-group12"
+  db_subnet_group_name = "main-subnet-group1"
 }
 
 ################################################################################
@@ -76,6 +76,10 @@ resource "aws_instance" "this" {
 
             # Update system
             sudo yum update -y
+
+            sudo dnf install nginx -y
+            sudo systemctl start nginx
+            sudo systemctl enable nginx
 
             sudo yum install -y mariadb105-server
             sudo systemctl start mariadb

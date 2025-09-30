@@ -4,7 +4,7 @@ import pymysql
 app = Flask(__name__)
 
 
-DB_HOST = "terraform-20250929095000984700000001.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
+DB_HOST = "erraform-20250930092152553100000007.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
 DB_USER = "Application"
 DB_PASS = "Application"
 DB_NAME = "Application"
