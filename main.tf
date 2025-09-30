@@ -1,5 +1,5 @@
 ################################################################################
-# VPC
+# VPC FULL SET-UP
 ################################################################################
 
 data "aws_availability_zones" "available" {
@@ -9,30 +9,104 @@ data "aws_availability_zones" "available" {
   }
 }
 
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.0"
-
-  name = local.name
-  cidr = local.vpc_cidr
-
-  azs             = local.azs
-  private_subnets = local.private_subnets
-  public_subnets  = local.public_subnets
-
-  enable_nat_gateway = true
-  single_nat_gateway = true
-
-  public_subnet_tags = {
-    "kubernetes.io/role/elb" = 1
+resource "aws_vpc" "main" {
+  cidr_block = local.vpc_cidr
+  enable_dns_support = true
+  enable_dns_hostnames = true
+  tags = {
+    Name = local.name
   }
-
-  private_subnet_tags = {
-    "kubernetes.io/role/internal-elb" = 1
-  }
-
-  tags = local.tags
 }
+
+resource "aws_subnet" "public_subnets" {
+  count                         = length(local.public_subnets)
+  vpc_id                        = aws_vpc.main.id
+  cidr_block                    = local.public_subnets[count.index]
+  availability_zone             = local.azs[count.index]
+  map_public_ip_on_launch       = true
+
+  tags = {
+    Name = "${local.name}-Public Subnet-${count.index}"
+  }
+} 
+
+resource "aws_subnet" "private_subnets" {
+  count                         = length(local.private_subnets)
+  vpc_id                        = aws_vpc.main.id
+  cidr_block                    = local.private_subnets[count.index]
+  availability_zone             = local.azs[count.index]
+  map_public_ip_on_launch       = false
+  
+  tags = {
+    Name = "${local.name}-Private Subnet-${count.index}"
+  }
+} 
+
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "${local.name}-igw"
+  }
+}
+
+resource "aws_eip" "nat" {
+
+  tags = {
+    Name = "${local.name}-nat-eip"
+  }
+}
+
+
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat.allocation_id
+  subnet_id     = aws_subnet.public_subnets[0].id
+
+  tags = {
+    Name = "${local.name}-nat"
+  }
+
+  depends_on = [aws_internet_gateway.igw]
+}
+
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = local.route_table_cidr
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
+  tags = {
+    Name = "${local.name}-public-rt"
+  }
+}
+
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block     = local.route_table_cidr
+    nat_gateway_id = aws_nat_gateway.nat.id
+  }
+
+  tags = {
+    Name = "${local.name}-private-rt"
+  }
+}
+
+resource "aws_route_table_association" "public" {
+  count          = length(aws_subnet.public_subnets)
+  subnet_id      = aws_subnet.public_subnets[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "private" {
+  count          = length(aws_subnet.private_subnets)
+  subnet_id      = aws_subnet.private_subnets[count.index].id
+  route_table_id = aws_route_table.private.id
+}
+
 
 ################################################################################
 # RDS FOR FLASK APPLICATION
@@ -40,7 +114,7 @@ module "vpc" {
 
 resource "aws_db_subnet_group" "mains" {
   name        = "main-subnet-group1"
-  subnet_ids  = module.vpc.private_subnets
+  subnet_ids  = aws_subnet.private_subnets[*].id
 }
 
 
@@ -55,7 +129,7 @@ resource "aws_db_instance" "main" {
   password             = local.password
   publicly_accessible  = false
   vpc_security_group_ids = [aws_security_group.db_sg.id]
-  db_subnet_group_name = "main-subnet-group1"
+  db_subnet_group_name = aws_db_subnet_group.mains.name
 }
 
 ################################################################################
@@ -65,7 +139,7 @@ resource "aws_db_instance" "main" {
 resource "aws_instance" "this" {
   ami                    = local.ami_id
   instance_type          = local.instance_type
-  subnet_id              = module.vpc.public_subnets[0]
+  subnet_id              = aws_subnet.public_subnets[0].id
   associate_public_ip_address = true
   key_name               = local.key_name
   vpc_security_group_ids = [aws_security_group.web_sg.id]
@@ -139,16 +213,16 @@ resource "aws_lb" "main" {
   internal                    = false
   load_balancer_type          = "application"
   security_groups             = [aws_security_group.lb_sg.id]
-  subnets                     = module.vpc.public_subnets
+  subnets                     = aws_subnet.public_subnets[*].id
   enable_deletion_protection  = false
   enable_cross_zone_load_balancing = true
   drop_invalid_header_fields  = true
 }
 
 resource "aws_lb_target_group" "main" {
-  vpc_id      = module.vpc.vpc_id
+  vpc_id      = aws_vpc.main.id
   name        = local.target_group_name
-  port        = 8000
+  port        = 80
   protocol    = "HTTP"
   
   health_check {
@@ -177,7 +251,7 @@ resource "aws_lb_listener" "http" {
 
 
 resource "aws_security_group" "lb_sg" {     
-  vpc_id      = module.vpc.vpc_id
+  vpc_id      = aws_vpc.main.id
   name_prefix = "lb-sg"
   ingress {
     from_port   = 80
@@ -194,7 +268,7 @@ resource "aws_security_group" "lb_sg" {
 }
 
 resource "aws_security_group" "web_sg" {
-  vpc_id            = module.vpc.vpc_id
+  vpc_id            = aws_vpc.main.id
   name_prefix       = "App-sg"
   ingress {
     from_port       = 80
@@ -233,7 +307,7 @@ resource "aws_security_group" "web_sg" {
 }
 
 resource "aws_security_group" "db_sg" {
-  vpc_id = module.vpc.vpc_id
+  vpc_id = aws_vpc.main.id
   name   = "db-sg"
 
   ingress {
