@@ -14,11 +14,13 @@ data "aws_availability_zones" "available" {
 ################################################################################
 
 module "vpc" {
-  source   = "./module/vpc"
-  vpc_cidr = local.vpc_cidr
-  name     = local.name
+  source           = "./module/vpc"
+  name             = local.name
+  vpc_cidr         = local.vpc_cidr
+  public_subnets   = local.public_subnets
+  private_subnets  = local.private_subnets
+  route_table_cidr = "0.0.0.0/0"
 }
-
 
 ################################################################################
 # MODULE-RDS
@@ -35,37 +37,13 @@ module "rds" {
   username             = local.username
   password             = local.password
   db_sg_id             = aws_security_group.db_sg.id
-  db_subnet_group_name = local.db_subnet_gn
+  db_subnet_group_name = aws_db_subnet_group.mains.name
 }
 
-resource "aws_db_subnet_group" "mains" { 
-  name = local.db_subnet_gn 
-  subnet_ids = module.subnets.public_ids[*] 
-  }
-
-################################################################################
-# MODULE-SUBNETS
-################################################################################
-
-module "subnets" {
-  source          = "./module/subnets"
-  vpc_id          = module.vpc.id
-  name            = local.name
-  public_subnets  = local.public_subnets
-  private_subnets = local.private_subnets
+resource "aws_db_subnet_group" "mains" {
+  name       = local.db_subnet_gn
+  subnet_ids = module.vpc.private_ids
 }
-
-################################################################################
-# MODULE-NAT
-################################################################################
-
-module "nat" {
-  source             = "./module/nat"
-  name               = local.name
-  public_subnet_id   = module.subnets.public_ids[0]
-  internet_gateway_id = aws_internet_gateway.igw.id
-}
-
 
 ################################################################################
 # MODULE-LOAD BALANCER
@@ -76,28 +54,12 @@ module "alb" {
   lb_name           = local.lb_name
   lb_type           = local.lbt
   security_group_id = aws_security_group.lb_sg.id
-  subnet_ids        = module.subnets.public_ids
-  vpc_id            = module.vpc.id
+  subnet_ids        = module.vpc.public_ids
+  vpc_id            = module.vpc.vpc_id
   target_group_name = local.target_group_name
   app_port          = 80
   health_check_path = "/items"
   instance_id       = aws_instance.this.id
-}
-
-
-################################################################################
-# MODULE-ROUTES
-################################################################################
-
-module "routes" {
-  source              = "./module/routes"
-  name                = local.name
-  vpc_id              = module.vpc.id
-  route_table_cidr    = local.route_table_cidr
-  internet_gateway_id = aws_internet_gateway.igw.id
-  nat_gateway_id      = module.nat.id
-  public_subnet_ids   = module.subnets.public_ids
-  private_subnet_ids  = module.subnets.private_ids
 }
 
 ################################################################################
@@ -105,7 +67,7 @@ module "routes" {
 ################################################################################
 
 resource "aws_internet_gateway" "igw" {
-  vpc_id = module.vpc.id
+  vpc_id = module.vpc.vpc_id
 
   tags = {
     Name = "${local.name}-igw"
@@ -116,15 +78,17 @@ resource "aws_internet_gateway" "igw" {
 # SECURITY-GROUP FOR LOAD-BALANCER
 ################################################################################
 
-resource "aws_security_group" "lb_sg" {     
-  vpc_id      = module.vpc.id
+resource "aws_security_group" "lb_sg" {
+  vpc_id      = module.vpc.vpc_id
   name_prefix = local.name_prefix_lb
+
   ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -138,8 +102,9 @@ resource "aws_security_group" "lb_sg" {
 ################################################################################
 
 resource "aws_security_group" "web_sg" {
-  vpc_id            = module.vpc.id
-  name_prefix       = local.name_prefix_web
+  vpc_id      = module.vpc.vpc_id
+  name_prefix = local.name_prefix_web
+
   ingress {
     from_port       = 80
     to_port         = 80
@@ -148,11 +113,11 @@ resource "aws_security_group" "web_sg" {
   }
 
   ingress {
-    description      = "from ALB"
-    from_port        = 8000
-    to_port          = 8000
-    protocol         = "tcp"
-    security_groups  = [aws_security_group.lb_sg.id]
+    description     = "from ALB"
+    from_port       = 8000
+    to_port         = 8000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.lb_sg.id]
   }
 
   ingress {
@@ -162,12 +127,14 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # (⚠️ remove this if you don’t want to allow everything)
   ingress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -181,7 +148,7 @@ resource "aws_security_group" "web_sg" {
 ################################################################################
 
 resource "aws_security_group" "db_sg" {
-  vpc_id = module.vpc.id
+  vpc_id = module.vpc.vpc_id
   name   = local.name_prefix_db
 
   ingress {
@@ -199,24 +166,21 @@ resource "aws_security_group" "db_sg" {
   }
 }
 
-
 ################################################################################
 # EC2 FOR WORDPRESS/FLASK-APP
 ################################################################################
 
 resource "aws_instance" "this" {
-  ami                    = local.ami_id
-  instance_type          = local.instance_type
-  subnet_id              = module.subnets.public_ids[0]
+  ami                         = local.ami_id
+  instance_type               = local.instance_type
+  subnet_id                   = module.vpc.public_ids[0]
   associate_public_ip_address = true
-  key_name               = local.key_name
-  vpc_security_group_ids = [aws_security_group.web_sg.id]
+  key_name                    = local.key_name
+  vpc_security_group_ids      = [aws_security_group.web_sg.id]
 
   user_data = <<-EOT
             #!/bin/bash
             set -e
-
-            # Update system
             sudo yum update -y
 
             sudo dnf install nginx -y
@@ -227,21 +191,15 @@ resource "aws_instance" "this" {
             sudo systemctl start mariadb
             sudo systemctl enable mariadb
 
-            # Install dependencies
             sudo yum install -y python3 git
             sudo yum install -y python3-pip
 
-            # Clone your repo
             cd /home/ec2-user
             if [ ! -d "wordpress-extra" ]; then
               git clone https://github.com/SaadChaudhary12/wordpress-extra.git
             fi
-
             cd wordpress-extra
-
   EOT
-
-
 
   tags = { Name = "Saad-ec2" }
 }
@@ -270,8 +228,3 @@ resource "aws_instance" "this" {
 #   EOT
 #   tags = { Name = "Saad-DB-ec2" }
 # }
-
-
-################################################################################
-# END
-################################################################################
