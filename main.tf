@@ -187,7 +187,6 @@ resource "aws_instance" "this" {
   vpc_security_group_ids = [aws_security_group.web_sg.id]
 
   user_data = <<-EOT
-
             #!/bin/bash
             set -e
 
@@ -213,23 +212,6 @@ resource "aws_instance" "this" {
             fi
 
             cd wordpress-extra
-
-            sudo chown -R ec2-user:ec2-user /home/ec2-user/wordpress-extra
-
-            DB_ENDPOINT="${aws_db_instance.main.endpoint}"
-            DB_USER="Application"
-            DB_PASS="Application"
-            DB_NAME="Application"
-
-            mysql -h $DB_ENDPOINT -u $DB_USER -p$DB_PASS $DB_NAME <<MYSQL_SCRIPT
-
-            CREATE TABLE IF NOT EXISTS items (
-              id INT AUTO_INCREMENT PRIMARY KEY,
-              name VARCHAR(100),
-              quantity INT
-            );
-            
-            MYSQL_SCRIPT
 
   EOT
 
