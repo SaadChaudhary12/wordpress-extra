@@ -70,6 +70,11 @@ jobs:
           ssh -o StrictHostKeyChecking=no \
               -o ProxyCommand="ssh -o StrictHostKeyChecking=no -W %h:%p ec2-user@${{ secrets.BASTION_HOST }}" \
               ec2-user@${{ secrets.APP_PRIVATE_IP }} << 'EOF'
+              echo "✅ Successfully connected to APP instance at $(hostname)"
+              whoami
+              uptime
+
+            ls
 
             cd /home/ec2-user/wordpress-extra
             git pull
