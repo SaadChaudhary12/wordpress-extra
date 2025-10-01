@@ -80,6 +80,10 @@ jobs:
             git pull
             sudo pip3 install -r requirements.txt
             sudo pkill -f "python3 app.py" || true
+            pwd
+
+            sleep 10
+
             nohup python3 app.py > /home/ec2-user/wordpress-extra/app.log 2>&1 &
 
             sleep 10
