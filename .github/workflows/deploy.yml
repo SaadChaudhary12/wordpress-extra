@@ -84,11 +84,11 @@ jobs:
 
             sleep 10
 
-            nohup python3 app.py > /home/ec2-user/wordpress-extra/app.log 2>&1 &
+            nohup python3 app.py > /home/ec2-user/app.log 2>&1 &
 
             sleep 10
 
-            PORT=$(grep "Running on http://127.0.0.1" app.log | awk -F: '{print $3}')
+            PORT=$(grep "Running on http://127.0.0.1" /home/ec2-user/app.log | awk -F: '{print $3}')
             echo "Flask started on port: $PORT"
 
             sudo tee /etc/nginx/conf.d/flask.conf <<EOCONF
