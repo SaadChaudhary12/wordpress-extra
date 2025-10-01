@@ -121,6 +121,8 @@ jobs:
             }
           EOCONF
 
+              sudo systemctl reload nginx
+
           EOF
 
 
