@@ -63,18 +63,6 @@ module "alb" {
 }
 
 ################################################################################
-# INTERNET-GATEWAY
-################################################################################
-
-resource "aws_internet_gateway" "igw" {
-  vpc_id = module.vpc.vpc_id
-
-  tags = {
-    Name = "${local.name}-igw"
-  }
-}
-
-################################################################################
 # SECURITY-GROUP FOR LOAD-BALANCER
 ################################################################################
 
@@ -154,7 +142,44 @@ resource "aws_security_group" "db_sg" {
     from_port       = 3306
     to_port         = 3306
     protocol        = "tcp"
+    security_groups = [
+      aws_security_group.web_sg.id,
+      aws_security_group.bastion_sg.id
+      ]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+
+resource "aws_security_group" "bastion_sg" {
+  vpc_id      = module.vpc.vpc_id
+  name_prefix = local.name_prefix_bsg
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
     security_groups = [aws_security_group.web_sg.id]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -172,8 +197,7 @@ resource "aws_security_group" "db_sg" {
 resource "aws_instance" "this" {
   ami                         = local.ami_id
   instance_type               = local.instance_type
-  subnet_id                   = module.vpc.public_ids[0]
-  associate_public_ip_address = true
+  subnet_id                   = module.vpc.private_ids[0]
   key_name                    = local.key_name
   vpc_security_group_ids      = [aws_security_group.web_sg.id]
 
@@ -197,33 +221,33 @@ resource "aws_instance" "this" {
             if [ ! -d "wordpress-extra" ]; then
               git clone https://github.com/SaadChaudhary12/wordpress-extra.git
             fi
-            cd wordpress-extra
   EOT
 
-  tags = { Name = "Saad-ec2" }
+  tags = { Name = "Saad-App-ec2" }
 }
 
 ################################################################################
-# EC2 FOR DATABASE
+# EC2 FOR DATABASE/BASTION
 ################################################################################
 
-# resource "aws_instance" "thiss" {
-#   ami                    = local.ami_id
-#   instance_type          = local.instance_type
-#   subnet_id              = module.vpc.private_subnets[0]
-#   key_name               = local.key_name
-#   vpc_security_group_ids = [aws_security_group.db_sg.id]
+resource "aws_instance" "thiss" {
+  ami                    = local.ami_id
+  instance_type          = local.instance_type
+  subnet_id              = module.vpc.public_ids[0]
+  associate_public_ip_address = true
+  key_name               = local.key_name
+  vpc_security_group_ids = [aws_security_group.bastion_sg.id]
 
-#   user_data = <<-EOT
-#     #!/bin/bash
-#     sudo dnf install -y mariadb105-server
-#     sudo systemctl start mariadb
-#     sudo systemctl enable mariadb
-#     mysql -e "CREATE DATABASE wordpress;"
-#     mysql -e "CREATE USER 'wordpress'@'%' IDENTIFIED BY 'wordpress';"
-#     mysql -e "GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpress'@'%';"
-#     mysql -e "FLUSH PRIVILEGES;"
+  # user_data = <<-EOT
+  #   #!/bin/bash
+  #   sudo dnf install -y mariadb105-server
+  #   sudo systemctl start mariadb
+  #   sudo systemctl enable mariadb
+  #   mysql -e "CREATE DATABASE wordpress;"
+  #   mysql -e "CREATE USER 'wordpress'@'%' IDENTIFIED BY 'wordpress';"
+  #   mysql -e "GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpress'@'%';"
+  #   mysql -e "FLUSH PRIVILEGES;"
 
-#   EOT
-#   tags = { Name = "Saad-DB-ec2" }
-# }
+  # EOT
+  tags = { Name = "Saad-Bastion-ec2" }
+}

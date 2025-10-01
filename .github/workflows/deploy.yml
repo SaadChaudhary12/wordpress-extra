@@ -43,3 +43,54 @@
 
 #                 sudo systemctl reload nginx
 #           EOF
+
+
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Deploy Flask App via Bastion
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+              -o ProxyCommand="ssh -o StrictHostKeyChecking=no -W %h:%p ec2-user@${{ secrets.BASTION_HOST }}" \
+              ec2-user@${{ secrets.APP_PRIVATE_IP }} << 'EOF'
+
+            cd /home/ec2-user/wordpress-extra
+            git pull
+            sudo pip3 install -r requirements.txt
+            sudo pkill -f "python3 app.py" || true
+            nohup python3 app.py > app.log 2>&1 &
+
+            sleep 10
+
+            PORT=$(grep "Running on http://127.0.0.1" app.log | awk -F: '{print $3}')
+            echo "Flask started on port: $PORT"
+
+            sudo tee /etc/nginx/conf.d/flask.conf <<EOCONF
+            server {
+                listen 80;
+                server_name _;
+                location / {
+                    proxy_pass http://127.0.0.1:$PORT;
+                }
+            }
+          EOCONF
+
+            sudo systemctl reload nginx
+          EOF
