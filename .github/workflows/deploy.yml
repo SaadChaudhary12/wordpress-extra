@@ -59,17 +59,35 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
+      - name: Get EC2 Private IP
+        id: get_ip
+        run: |
+          PRIVATE_IP=$(aws ec2 describe-instances \
+            --region us-east-1 \
+            --filters "Name=tag:Name,Values=Saad-App-ec2" \
+            --query "Reservations[*].Instances[*].PrivateIpAddress" \
+            --output text)
+          echo "PRIVATE_IP=$PRIVATE_IP" >> $GITHUB_ENV
+
       - name: Deploy Flask App via Bastion
         run: |
           ssh -o StrictHostKeyChecking=no \
               -o ProxyCommand="ssh -o StrictHostKeyChecking=no -W %h:%p ec2-user@${{ secrets.BASTION_HOST }}" \
-              ec2-user@${{ secrets.APP_PRIVATE_IP }} << 'EOF'
+              ec2-user@$PRIVATE_IP << 'EOF'
 
             ls
 
