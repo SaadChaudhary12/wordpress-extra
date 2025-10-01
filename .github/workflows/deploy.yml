@@ -81,7 +81,6 @@ jobs:
             --filters "Name=tag:Name,Values=Saad-App-ec2" \
             --query "Reservations[*].Instances[*].PrivateIpAddress" \
             --output text)
-          echo "PRIVATE_IP=$PRIVATE_IP" >> $GITHUB_ENV
 
           sleep 10
 
