@@ -83,6 +83,10 @@ jobs:
             --output text)
           echo "PRIVATE_IP=$PRIVATE_IP" >> $GITHUB_ENV
 
+          sleep 10
+
+          echo PRIVATE_IP=$PRIVATE_IP
+
       - name: Deploy Flask App via Bastion
         run: |
           ssh -o StrictHostKeyChecking=no \
