@@ -150,6 +150,11 @@ on:
 jobs:
   upload:
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+      
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
