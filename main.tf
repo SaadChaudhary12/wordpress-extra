@@ -203,19 +203,18 @@ resource "aws_instance" "this" {
 
   user_data = <<-EOT
             #!/bin/bash
-            set -e
             sudo yum update -y
 
             sudo dnf install nginx -y
             sudo systemctl start nginx
             sudo systemctl enable nginx
 
-            sudo yum install -y mariadb105-server
+            sudo dnf install -y mariadb105-server
             sudo systemctl start mariadb
             sudo systemctl enable mariadb
 
-            sudo yum install -y python3 git
-            sudo yum install -y python3-pip
+            sudo dnf install -y python3 git
+            sudo dnf install -y python3-pip
 
             cd /home/ec2-user
             if [ ! -d "wordpress-extra" ]; then

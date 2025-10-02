@@ -60,12 +60,10 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
       
-      - name: Configure AWS Credentials
+      - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          role-to-assume: arn:aws:iam::489994096722:role/Saad-Trustpolicy-Role
           aws-region: us-east-1
 
       - name: Setup SSH agent
@@ -111,7 +109,7 @@ jobs:
             PORT=$(grep "Running on http://127.0.0.1" /home/ec2-user/app.log | awk -F: '{print $3}')
             echo "Flask started on port: $PORT"
 
-            
+
 
             sudo tee /etc/nginx/conf.d/flask.conf <<EOCONF
             server {
@@ -126,13 +124,4 @@ jobs:
               sudo systemctl reload nginx
 
           EOF
-
-
-
-
-
-#          #   sleep 10
-
-          #   nohup python3 app.py > /home/ec2-user/app.log 2>&1 &
-
-          #   sudo systemctl reload nginx
+          

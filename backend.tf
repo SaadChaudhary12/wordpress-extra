@@ -12,7 +12,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "terraform-bucket-test21"
+    bucket         = "terraform-bucket-test20"
     key            = "Wordpress-Extra/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
