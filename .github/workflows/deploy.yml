@@ -122,13 +122,13 @@
 
 
 #             sudo tee /etc/nginx/conf.d/flask.conf <<EOCONF
-#             server {
-#                 listen 80;
-#                 server_name _;
-#                 location / {
-#                     proxy_pass http://127.0.0.1:$PORT;
-#                 }
-#             }
+            # server {
+            #     listen 80;
+            #     server_name _;
+            #     location / {
+            #         proxy_pass http://127.0.0.1:$PORT;
+            #     }
+            # }
 #           EOCONF
 
 #               sudo systemctl reload nginx
@@ -146,7 +146,9 @@ on:
   push:
     branches:
       - main
-      
+
+
+
 jobs:
   upload:
     runs-on: ubuntu-latest
