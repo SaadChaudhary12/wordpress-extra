@@ -22,173 +22,196 @@ module "vpc" {
   route_table_cidr = local.route_table_cidr
 }
 
-# ################################################################################
-# # MODULE-RDS
-# ################################################################################
+################################################################################
+# MODULE-RDS
+################################################################################
 
-# module "rds" {
-#   source               = "./module/rds"
-#   name                 = local.name
-#   allocated_storage    = local.storage
-#   engine               = local.engine
-#   engine_version       = local.engine_version
-#   instance_class       = local.instance_class
-#   db_name              = local.db_name
-#   username             = local.username
-#   password             = local.password
-#   db_sg_id             = aws_security_group.db_sg.id
-#   db_subnet_group_name = aws_db_subnet_group.mains.name
-# }
+module "rds" {
+  source               = "./module/rds"
+  name                 = local.name
+  allocated_storage    = local.storage
+  engine               = local.engine
+  engine_version       = local.engine_version
+  instance_class       = local.instance_class
+  db_name              = local.db_name
+  username             = local.username
+  password             = local.password
+  db_sg_id             = aws_security_group.db_sg.id
+  db_subnet_group_name = aws_db_subnet_group.mains.name
+}
 
-# resource "aws_db_subnet_group" "mains" {
-#   name       = local.db_subnet_gn
-#   subnet_ids = module.vpc.private_ids
-# }
+resource "aws_db_subnet_group" "mains" {
+  name       = local.db_subnet_gn
+  subnet_ids = module.vpc.private_ids
+}
 
-# ################################################################################
-# # MODULE-LOAD BALANCER
-# ################################################################################
-
-# module "alb" {
-#   source            = "./module/alb"
-#   lb_name           = local.lb_name
-#   lb_type           = local.lbt
-#   security_group_id = aws_security_group.lb_sg.id
-#   subnet_ids        = module.vpc.public_ids
-#   vpc_id            = module.vpc.vpc_id
-#   target_group_name = local.target_group_name
-#   app_port          = local.app_port
-#   health_check_path = local.health_check_path
-#   instance_id       = aws_instance.this.id
-# }
-
-# ################################################################################
-# # SECURITY-GROUP FOR LOAD-BALANCER
-# ################################################################################
-
-# resource "aws_security_group" "lb_sg" {
-#   vpc_id      = module.vpc.vpc_id
-#   name_prefix = local.name_prefix_lb
-
-#   ingress {
-#     from_port   = 80
-#     to_port     = 80
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-
-#   egress {
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-# }
-
-# ################################################################################
-# # SECURITY-GROUP FOR APPLICATION / EC2
-# ################################################################################
-
-# resource "aws_security_group" "web_sg" {
-#   vpc_id      = module.vpc.vpc_id
-#   name_prefix = local.name_prefix_web
-
-#   ingress {
-#     from_port       = 80
-#     to_port         = 80
-#     protocol        = "tcp"
-#     security_groups = [aws_security_group.lb_sg.id]
-#   }
-
-#   ingress {
-#     description     = "from ALB"
-#     from_port       = 8000
-#     to_port         = 8000
-#     protocol        = "tcp"
-#     security_groups = [aws_security_group.lb_sg.id]
-#   }
-
-#   ingress {
-#     from_port   = 22
-#     to_port     = 22
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-
-#   ingress {
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-
-#   egress {
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-# }
-
-# ################################################################################
-# # SECURITY-GROUP FOR DATA-BASE
-# ################################################################################
-
-# resource "aws_security_group" "db_sg" {
-#   vpc_id = module.vpc.vpc_id
-#   name   = local.name_prefix_db
-
-#   ingress {
-#     from_port       = 3306
-#     to_port         = 3306
-#     protocol        = "tcp"
-#     security_groups = [
-#       aws_security_group.web_sg.id,
-#       aws_security_group.bastion_sg.id
-#       ]
-#   }
-
-#   egress {
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-# }
+################################################################################
+# MODULE-AUTO SCALING GROUP
+################################################################################
 
 
-# resource "aws_security_group" "bastion_sg" {
-#   vpc_id      = module.vpc.vpc_id
-#   name_prefix = local.name_prefix_bsg
+module "autoscaling" {
+  source               = "./module/autoscaling"
+  launch_template_name = "App-template"
+  ami_id               = local.ami_id
+  instance_type        = local.instance_type
+  security_groups      = [aws_security_group.web_sg.id]
+  user_data            = base64encode(templatefile("./app.sh", {}))
+  desired_capacity     = 0
+  max_size             = 2
+  min_size             = 1
+  subnets              = module.vpc.private_ids[0]
+  vpc_id               = module.vpc.vpc_id
+  target_group_arns    = [module.loadbalancer.target_group_arn]
+  key_name             = local.key_name
+  public_key           = ""
+  iam_instance_profile_name = ""
+}
 
-#   ingress {
-#     from_port   = 80
-#     to_port     = 80
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
+################################################################################
+# MODULE-LOAD BALANCER
+################################################################################
 
-#   ingress {
-#     from_port       = 3306
-#     to_port         = 3306
-#     protocol        = "tcp"
-#     security_groups = [aws_security_group.web_sg.id]
-#   }
+module "alb" {
+  source            = "./module/alb"
+  lb_name           = local.lb_name
+  lb_type           = local.lbt
+  security_group_id = aws_security_group.lb_sg.id
+  subnet_ids        = module.vpc.public_ids
+  vpc_id            = module.vpc.vpc_id
+  target_group_name = local.target_group_name
+  app_port          = local.app_port
+  health_check_path = local.health_check_path
+  instance_id       = aws_instance.this.id
+}
 
-#   ingress {
-#     from_port   = 22
-#     to_port     = 22
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
+################################################################################
+# SECURITY-GROUP FOR LOAD-BALANCER
+################################################################################
 
-#   egress {
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-# }
+resource "aws_security_group" "lb_sg" {
+  vpc_id      = module.vpc.vpc_id
+  name_prefix = local.name_prefix_lb
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+################################################################################
+# SECURITY-GROUP FOR APPLICATION / EC2
+################################################################################
+
+resource "aws_security_group" "web_sg" {
+  vpc_id      = module.vpc.vpc_id
+  name_prefix = local.name_prefix_web
+
+  ingress {
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.lb_sg.id]
+  }
+
+  ingress {
+    description     = "from ALB"
+    from_port       = 8000
+    to_port         = 8000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.lb_sg.id]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+################################################################################
+# SECURITY-GROUP FOR DATA-BASE
+################################################################################
+
+resource "aws_security_group" "db_sg" {
+  vpc_id = module.vpc.vpc_id
+  name   = local.name_prefix_db
+
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [
+      aws_security_group.web_sg.id,
+      aws_security_group.bastion_sg.id
+      ]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+
+resource "aws_security_group" "bastion_sg" {
+  vpc_id      = module.vpc.vpc_id
+  name_prefix = local.name_prefix_bsg
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.web_sg.id]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
 
 # ################################################################################
 # # EC2 FOR WORDPRESS/FLASK-APP
