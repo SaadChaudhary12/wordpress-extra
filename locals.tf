@@ -13,7 +13,7 @@ locals {
   lb_name             = "Flask-Alb"  
   lbt                 = "application"
   health_check_path   = "/items"
-  app_port            = 80
+  app_port            = 3000
   name_prefix_lb      = "lb-sg"
   name_prefix_web     = "App-sg"
   name_prefix_db      = "db-sg"
@@ -22,7 +22,7 @@ locals {
   target_group_name   = "Flask-Alb-Tg"
   ami_id              = "ami-08982f1c5bf93d976"
   instance_type       = "t2.micro"                
-  key_name            = "Saad-Bastion-key"  
+  key_name            = "Saad-Flask-Key"  
   allowed_ssh_cidr    = "0.0.0.0/0"  
   storage             = "20" 
   engine_version      = "8.0"

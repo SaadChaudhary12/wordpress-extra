@@ -1,9 +1,9 @@
-# variable "lb_name"            { type = string }
-# variable "lb_type"            { type = string }
-# variable "security_group_id"  { type = string }
-# variable "subnet_ids"         { type = list(string) }
-# variable "vpc_id"             { type = string }
-# variable "target_group_name"  { type = string }
-# variable "app_port"           { type = number }
-# variable "health_check_path"  { type = string }
+variable "lb_name"            { type = string }
+variable "lb_type"            { type = string }
+variable "security_group_id"  { type = string }
+variable "subnet_ids"         { type = list(string) }
+variable "vpc_id"             { type = string }
+variable "target_group_name"  { type = string }
+variable "app_port"           { type = number }
+variable "health_check_path"  { type = string }
 # variable "instance_id"        { type = string }

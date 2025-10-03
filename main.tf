@@ -60,12 +60,12 @@ module "autoscaling" {
   desired_capacity     = 0
   max_size             = 2
   min_size             = 1
-  subnets              = module.vpc.private_ids[0]
+  subnets              = module.vpc.private_ids
   vpc_id               = module.vpc.vpc_id
-  target_group_arns    = [module.loadbalancer.target_group_arn]
+  target_group_arns    = [module.alb.target_group_arn]
   key_name             = local.key_name
   public_key           = ""
-  iam_instance_profile_name = ""
+  iam_instance_profile_name = "Saad-EC2-Role"
 }
 
 ################################################################################
@@ -82,7 +82,6 @@ module "alb" {
   target_group_name = local.target_group_name
   app_port          = local.app_port
   health_check_path = local.health_check_path
-  instance_id       = aws_instance.this.id
 }
 
 ################################################################################
