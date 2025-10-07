@@ -56,8 +56,8 @@ module "autoscaling" {
   ami_id               = local.ami_id
   instance_type        = local.instance_type
   security_groups      = [aws_security_group.web_sg.id]
-  user_data            = base64encode(templatefile("./app.sh", {}))
-  desired_capacity     = 0
+  user_data            = base64encode(templatefile("./app.sh", { db_endpoint = module.rds.endpoint }))
+  desired_capacity     = 1
   max_size             = 2
   min_size             = 1
   subnets              = module.vpc.private_ids

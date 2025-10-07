@@ -18,7 +18,7 @@ if [ ! -d "wordpress-extra" ]; then
     git clone https://github.com/SaadChaudhary12/wordpress-extra.git
 fi
 
-DB_HOST="terraform-20251003125110284300000008.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
+DB_HOST= "${db_endpoint}"
 DB_USER="Application"
 DB_PASS="Application"
 DB_NAME="Application"
