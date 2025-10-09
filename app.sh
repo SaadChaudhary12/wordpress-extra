@@ -18,7 +18,7 @@ if [ ! -d "wordpress-extra" ]; then
     git clone https://github.com/SaadChaudhary12/wordpress-extra.git
 fi
 
-DB_HOST= "${db_endpoint}"
+DB_HOST="${db_endpoint}"
 DB_USER="Application"
 DB_PASS="Application"
 DB_NAME="Application"
