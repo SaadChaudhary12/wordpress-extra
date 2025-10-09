@@ -173,31 +173,31 @@ jobs:
         run: aws s3 cp $ZIP_NAME s3://terraform-bucket-test20/$ZIP_NAME
              echo " Uploaded $ZIP_NAME "
 
-      - name: Update Launch Template user data with latest version 
-        run: |
-          LT_NAME="App-template"
-          USER_DATA=$(echo '#!/bin/bash
-          sudo yum install -y python3 pip unzip awscli
-          aws s3 cp s3://terraform-bucket-test20/'$ZIP_NAME' /home/ec2-user/app.zip
-          cd /home/ec2-user
-          unzip -o app.zip
-          pip3 install flask pymysql boto3
-          nohup python3 app_lt.py > app.log 2>&1 &' | base64)
+      # - name: Update Launch Template user data with latest version 
+      #   run: |
+      #     LT_NAME="App-template"
+      #     USER_DATA=$(echo '#!/bin/bash
+      #     sudo yum install -y python3 pip unzip awscli
+      #     aws s3 cp s3://terraform-bucket-test20/'$ZIP_NAME' /home/ec2-user/app.zip
+      #     cd /home/ec2-user
+      #     unzip -o app.zip
+      #     pip3 install flask pymysql boto3
+      #     nohup python3 app_lt.py > app.log 2>&1 &' | base64)
           
-          aws ec2 create-launch-template-version \
-            --launch-template-name $LT_NAME \
-            --source-version '$Latest' \
-            --launch-template-data "{\"UserData\": \"$USER_DATA\"}"
+      #     aws ec2 create-launch-template-version \
+      #       --launch-template-name $LT_NAME \
+      #       --source-version '$Latest' \
+      #       --launch-template-data "{\"UserData\": \"$USER_DATA\"}"
 
-      - name: Start Auto Scaling instance refresh (rolling update)
-        run: |
-          ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
-            --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'App')].AutoScalingGroupName" \
-            --output text)
+      # - name: Start Auto Scaling instance refresh (rolling update)
+      #   run: |
+      #     ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
+      #       --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'App')].AutoScalingGroupName" \
+      #       --output text)
 
-          aws autoscaling start-instance-refresh \
-            --auto-scaling-group-name $ASG_NAME \
-            --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
+      #     aws autoscaling start-instance-refresh \
+      #       --auto-scaling-group-name $ASG_NAME \
+      #       --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
 
 
   
