@@ -174,8 +174,9 @@ jobs:
           role-to-assume: arn:aws:iam::489994096722:role/Saad-Trustpolicy-Role
 
       - name: Upload to S3
-        run: aws s3 cp $ZIP_NAME s3://terraform-bucket-test20/$ZIP_NAME
-             echo " Uploaded $ZIP_NAME "
+        run: |
+          aws s3 cp $ZIP_NAME s3://terraform-bucket-test20/$ZIP_NAME
+          echo " Uploaded $ZIP_NAME "
 
       # - name: Update Launch Template user data with latest version 
       #   run: |
