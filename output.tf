@@ -18,6 +18,21 @@ output "endpoint" {
   value = module.rds.endpoint
 }
 
+output "db_secret_name" {
+  value = module.secrets_manager.secret_name
+}
+
+output "db_secret_arn" {
+  value = module.secrets_manager.secret_arn
+}
+
+# output "db_secret_name" {
+#   value = module.secrets_manager.secret_name
+# }
+
+# output "db_secret_arn" {
+#   value = module.secrets_manager.secret_arn
+# }
 
 
 

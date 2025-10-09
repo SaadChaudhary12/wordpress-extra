@@ -9,6 +9,10 @@ resource "aws_launch_template" "this" {
     security_groups             = var.security_groups
   }
 
+  iam_instance_profile {
+  name = var.iam_instance_profile_name
+  }
+
   user_data = base64encode(var.user_data)
 }
 

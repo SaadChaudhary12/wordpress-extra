@@ -46,6 +46,20 @@ resource "aws_db_subnet_group" "mains" {
 }
 
 ################################################################################
+# SECRETS
+################################################################################
+
+module "secrets_manager" {
+  source         = "./module/secret"
+  secret_name    = local.secret_name
+  db_username    = local.db_username
+  db_password    = local.db_password
+  db_name        = local.db_name
+  db_host        = split(":", module.rds.endpoint)[0]
+}
+
+
+################################################################################
 # MODULE-AUTO SCALING GROUP
 ################################################################################
 
@@ -65,8 +79,20 @@ module "autoscaling" {
   target_group_arns    = [module.alb.target_group_arn]
   key_name             = local.key_name
   public_key           = ""
-  iam_instance_profile_name = "Saad-EC2-Role"
+  iam_instance_profile_name = module.iam.instance_profile_name
 }
+
+################################################################################
+# MODULE-IAM
+################################################################################
+
+module "iam" {
+  source          = "./module/iam"
+  iam_role_name   = "App-EC2-Role"
+  secrets_arn     = module.secrets_manager.secret_arn
+  s3_bucket_arn   = "arn:aws:s3:::terraform-bucket-test20"
+}
+
 
 ################################################################################
 # MODULE-LOAD BALANCER
@@ -251,24 +277,24 @@ resource "aws_security_group" "bastion_sg" {
 # # EC2 FOR DATABASE/BASTION
 # ################################################################################
 
-# resource "aws_instance" "thiss" {
-#   ami                    = local.ami_id
-#   instance_type          = local.instance_type
-#   subnet_id              = module.vpc.public_ids[0]
-#   associate_public_ip_address = true
-#   key_name               = local.key_name
-#   vpc_security_group_ids = [aws_security_group.bastion_sg.id]
+resource "aws_instance" "thiss" {
+  ami                    = local.ami_id
+  instance_type          = local.instance_type
+  subnet_id              = module.vpc.public_ids[0]
+  associate_public_ip_address = true
+  key_name               = local.key_name
+  vpc_security_group_ids = [aws_security_group.bastion_sg.id]
 
-#   # user_data = <<-EOT
-#   #   #!/bin/bash
-#   #   sudo dnf install -y mariadb105-server
-#   #   sudo systemctl start mariadb
-#   #   sudo systemctl enable mariadb
-#   #   mysql -e "CREATE DATABASE wordpress;"
-#   #   mysql -e "CREATE USER 'wordpress'@'%' IDENTIFIED BY 'wordpress';"
-#   #   mysql -e "GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpress'@'%';"
-#   #   mysql -e "FLUSH PRIVILEGES;"
+  # user_data = <<-EOT
+  #   #!/bin/bash
+  #   sudo dnf install -y mariadb105-server
+  #   sudo systemctl start mariadb
+  #   sudo systemctl enable mariadb
+  #   mysql -e "CREATE DATABASE wordpress;"
+  #   mysql -e "CREATE USER 'wordpress'@'%' IDENTIFIED BY 'wordpress';"
+  #   mysql -e "GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpress'@'%';"
+  #   mysql -e "FLUSH PRIVILEGES;"
 
-#   # EOT
-#   tags = { Name = "Saad-Bastion-ec2" }
-# }
+  # EOT
+  tags = { Name = "Saad-Bastion-ec2" }
+}

@@ -1,13 +1,30 @@
 from flask import Flask, request, jsonify
 import pymysql
+import boto3
+import json
+import os
 
 app = Flask(__name__)
 
 
-DB_HOST = "terraform-20251003125110284300000008.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
-DB_USER = "Application"
-DB_PASS = "Application"
-DB_NAME = "Application"
+def get_db_credentials():
+    secret_name = os.getenv("DB_SECRET_NAME", "flask-db-credentials")
+    region_name = os.getenv("AWS_REGION", "us-east-1")
+
+    session = boto3.session.Session()
+    client = session.client(service_name="secretsmanager", region_name=region_name)
+
+    secret_value = client.get_secret_value(SecretId=secret_name)
+    secret_dict = json.loads(secret_value["SecretString"])
+    return secret_dict
+
+
+db_creds = get_db_credentials()
+DB_HOST = db_creds["DB_HOST"]
+DB_USER = db_creds["DB_USER"]
+DB_PASS = db_creds["DB_PASS"]
+DB_NAME = db_creds["DB_NAME"]
+
 
 
 def get_connection():

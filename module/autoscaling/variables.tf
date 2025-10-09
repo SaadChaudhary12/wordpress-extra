@@ -33,3 +33,7 @@ variable "iam_instance_profile_name" {
   type        = string
 }
 
+variable "iam_instance_profile_name" {
+  description = "IAM instance profile name to attach to EC2 instances"
+  type        = string
+}
