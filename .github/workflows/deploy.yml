@@ -160,8 +160,12 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Zip application
-        run: zip app_package.zip app_lt.py
+      - name: Zip application with commit SHA
+        run: |
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          ZIP_NAME="app_${COMMIT_SHA}.zip"
+          echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
+          zip -r $ZIP_NAME app_lt.py
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
