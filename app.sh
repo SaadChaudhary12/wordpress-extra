@@ -1,40 +1,40 @@
-#!/bin/bash
+# #!/bin/bash
 
-sudo yum update -y
-sudo dnf install nginx -y
-sudo systemctl start nginx
-sudo systemctl enable nginx
-sudo dnf install -y unzip awscli python3
-sudo dnf install -y mariadb105-server
-sudo systemctl start mariadb
-sudo systemctl enable mariadb
-sudo yum update -y
-sudo yum install -y python3 pip unzip awscli
+# sudo yum update -y
+# sudo dnf install nginx -y
+# sudo systemctl start nginx
+# sudo systemctl enable nginx
+# sudo dnf install -y unzip awscli python3
+# sudo dnf install -y mariadb105-server
+# sudo systemctl start mariadb
+# sudo systemctl enable mariadb
+# sudo yum update -y
+# sudo yum install -y python3 pip unzip awscli
 
-SECRET_NAME="Saad-Secret1"
-SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --query SecretString --output text)
-DB_HOST=$(echo $SECRET_JSON | jq -r .DB_HOST)
-DB_USER=$(echo $SECRET_JSON | jq -r .DB_USER)	# jq  reads JSON input and outputs structured data, When you add -r, it tells jq to output raw strings, not JSON. 
-DB_PASS=$(echo $SECRET_JSON | jq -r .DB_PASS)
-DB_NAME=$(echo $SECRET_JSON | jq -r .DB_NAME)
+# SECRET_NAME="Saad-Secret1"
+# SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --query SecretString --output text)
+# DB_HOST=$(echo $SECRET_JSON | jq -r .DB_HOST)
+# DB_USER=$(echo $SECRET_JSON | jq -r .DB_USER)	# jq  reads JSON input and outputs structured data, When you add -r, it tells jq to output raw strings, not JSON. 
+# DB_PASS=$(echo $SECRET_JSON | jq -r .DB_PASS)
+# DB_NAME=$(echo $SECRET_JSON | jq -r .DB_NAME)
 
-mysql -h $DB_HOST -u $DB_USER -p$DB_PASS <<EOF
+# mysql -h $DB_HOST -u $DB_USER -p$DB_PASS <<EOF
 
-USE Application;
-CREATE TABLE items (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100),
-  quantity INT
-);
+# USE Application;
+# CREATE TABLE items (
+#   id INT AUTO_INCREMENT PRIMARY KEY,
+#   name VARCHAR(100),
+#   quantity INT
+# );
 
-EOF
+# EOF
 
-LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk '{print $4}')
-aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/app.zip
-cd /home/ec2-user
-unzip -o app.zip
-pip3 install flask pymysql boto3
-nohup python3 app_lt.py > /home/ec2-user/app.log 2>&1 &
+# LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk '{print $4}')
+# aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/app.zip
+# cd /home/ec2-user
+# unzip -o app.zip
+# pip3 install flask pymysql boto3
+# nohup python3 app_lt.py > /home/ec2-user/app.log 2>&1 &
 
 # sudo yum update -y
 # sudo dnf install nginx -y
