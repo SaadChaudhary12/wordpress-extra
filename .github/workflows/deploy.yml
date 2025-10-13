@@ -49,12 +49,15 @@ jobs:
           cd /home/ec2-user
           unzip -o app.zip
           pip3 install flask pymysql boto3
-          nohup python3 app_lt.py > app.log 2>&1 &' | base64)
+          nohup python3 app_lt.py > app.log 2>&1 &' | base64 -w 0)
+          
+          JSON=$(jq -n --arg ud "$USER_DATA" '{UserData: $ud}')
           
           aws ec2 create-launch-template-version \
             --launch-template-name $LT_NAME \
             --source-version '$Latest' \
-            --launch-template-data "{\"UserData\": \"$USER_DATA\"}"
+            --launch-template-data "$JSON"
+
 
       - name: Start Auto Scaling instance refresh
         run: |
