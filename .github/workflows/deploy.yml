@@ -47,6 +47,19 @@ jobs:
           sudo yum install -y python3 pip unzip awscli
           aws s3 cp s3://terraform-bucket-test20/'$ZIP_NAME' /home/ec2-user/app.zip
           cd /home/ec2-user
+          DB_HOST="${db_endpoint}"
+          DB_USER="terraform-20251013105120197200000008.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
+          DB_PASS="Application"
+          DB_NAME="Application"
+
+          mysql -h $DB_HOST -u $DB_USER -p$DB_PASS <<EOF
+
+          USE Application;
+          CREATE TABLE items (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100),
+            quantity INT
+          );
           unzip -o app.zip
           pip3 install flask pymysql boto3
           nohup python3 app_lt.py > app.log 2>&1 &' | base64 -w 0)
