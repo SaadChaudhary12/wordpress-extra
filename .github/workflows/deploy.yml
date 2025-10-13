@@ -152,10 +152,12 @@ jobs:
           systemctl enable mariadb
           systemctl start mariadb
 
-          DB_HOST="terraform-20251013105120197200000008.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
-          DB_USER="Application"
-          DB_PASS="Application"
-          DB_NAME="Application"
+          SECRET_NAME="Saad-Secret1"
+          SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --query SecretString --output text)
+          DB_HOST=$(echo $SECRET_JSON | jq -r .DB_HOST)
+          DB_USER=$(echo $SECRET_JSON | jq -r .DB_USER)	# jq  reads JSON input and outputs structured data, When you add -r, it tells jq to output raw strings, not JSON. 
+          DB_PASS=$(echo $SECRET_JSON | jq -r .DB_PASS)
+          DB_NAME=$(echo $SECRET_JSON | jq -r .DB_NAME)
 
           mysql -h $DB_HOST -u $DB_USER -p$DB_PASS -e "CREATE DATABASE IF NOT EXISTS $DB_NAME; USE $DB_NAME; CREATE TABLE IF NOT EXISTS items (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), quantity INT);"
 
