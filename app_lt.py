@@ -6,7 +6,6 @@ import os
 
 app = Flask(__name__)
 
-
 def get_db_credentials():
     secret_name = os.getenv("DB_SECRET_NAME", "Saad-Secret1")
     region_name = os.getenv("AWS_REGION", "us-east-1")
@@ -17,7 +16,6 @@ def get_db_credentials():
     secret_value = client.get_secret_value(SecretId=secret_name)
     secret_dict = json.loads(secret_value["SecretString"])
     return secret_dict
-
 
 db_creds = get_db_credentials()
 DB_HOST = db_creds["DB_HOST"]
