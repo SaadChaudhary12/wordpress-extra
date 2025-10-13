@@ -155,7 +155,7 @@ jobs:
           SECRET_NAME="Saad-Secret1"
           SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --query SecretString --output text)
           DB_HOST=$(echo $SECRET_JSON | jq -r .DB_HOST)
-          DB_USER=$(echo $SECRET_JSON | jq -r .DB_USER)	# jq  reads JSON input and outputs structured data, When you add -r, it tells jq to output raw strings, not JSON. 
+          DB_USER=$(echo $SECRET_JSON | jq -r .DB_USER) 
           DB_PASS=$(echo $SECRET_JSON | jq -r .DB_PASS)
           DB_NAME=$(echo $SECRET_JSON | jq -r .DB_NAME)
 
@@ -175,6 +175,7 @@ jobs:
             --launch-template-name $LT_NAME \
             --source-version '$Latest' \
             --launch-template-data "$JSON"
+            
 
       - name: Start Auto Scaling instance refresh
         run: |

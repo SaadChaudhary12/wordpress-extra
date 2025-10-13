@@ -11,10 +11,12 @@ sudo systemctl enable mariadb
 sudo yum update -y
 sudo yum install -y python3 pip unzip awscli
 
-DB_HOST="${db_endpoint}"
-DB_USER="Application"
-DB_PASS="Application"
-DB_NAME="Application"
+SECRET_NAME="Saad-Secret1"
+SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --query SecretString --output text)
+DB_HOST=$(echo $SECRET_JSON | jq -r .DB_HOST)
+DB_USER=$(echo $SECRET_JSON | jq -r .DB_USER)	# jq  reads JSON input and outputs structured data, When you add -r, it tells jq to output raw strings, not JSON. 
+DB_PASS=$(echo $SECRET_JSON | jq -r .DB_PASS)
+DB_NAME=$(echo $SECRET_JSON | jq -r .DB_NAME)
 
 mysql -h $DB_HOST -u $DB_USER -p$DB_PASS <<EOF
 
