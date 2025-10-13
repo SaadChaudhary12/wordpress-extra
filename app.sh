@@ -11,6 +11,22 @@ sudo systemctl enable mariadb
 sudo yum update -y
 sudo yum install -y python3 pip unzip awscli
 
+DB_HOST="${db_endpoint}"
+DB_USER="Application"
+DB_PASS="Application"
+DB_NAME="Application"
+
+mysql -h $DB_HOST -u $DB_USER -p$DB_PASS <<EOF
+
+USE Application;
+CREATE TABLE items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100),
+  quantity INT
+);
+
+EOF
+
 LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk '{print $4}')
 aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/app.zip
 cd /home/ec2-user

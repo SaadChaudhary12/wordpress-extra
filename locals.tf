@@ -14,7 +14,7 @@ locals {
   lbt                 = "application"
   health_check_path   = "/items"
   app_port            = 3000
-  secret_name         = "Saad-Secret"
+  secret_name         = "Saad-Secret1"
   name_prefix_lb      = "lb-sg"
   name_prefix_web     = "App-sg"
   name_prefix_db      = "db-sg"
