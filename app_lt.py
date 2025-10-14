@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 
 def get_db_credentials():
-    secret_name = os.getenv("DB_SECRET_NAME", "Saad-Secret123")
+    secret_name = os.getenv("DB_SECRET_NAME", "Saad-Secret1234")
     region_name = os.getenv("AWS_REGION", "us-east-1")
 
     session = boto3.session.Session()
@@ -52,7 +52,7 @@ def init_db():
         print("Database and table verified/created successfully.")
     except Exception as e:
         print("Error initializing database:", e)
-        
+
 
 @app.route("/items", methods=["GET"])
 def get_items():

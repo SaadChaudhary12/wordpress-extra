@@ -171,7 +171,7 @@ jobs:
       - name: Start Auto Scaling instance refresh
         run: |
           ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
-            --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'terraform-2025101411332041250000000c')].AutoScalingGroupName" \
+            --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'terraform-2025101413540942050000000c')].AutoScalingGroupName" \
             --output text)
 
           aws autoscaling start-instance-refresh \
