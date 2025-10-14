@@ -135,54 +135,54 @@ jobs:
           aws s3 cp $ZIP_NAME s3://terraform-bucket-test20/$ZIP_NAME
           echo "Uploaded $ZIP_NAME"
 
-      - name: Update Launch Template user data with latest version 
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y jq
+      # - name: Update Launch Template user data with latest version 
+      #   run: |
+      #     sudo apt-get update -y
+      #     sudo apt-get install -y jq
 
-          LT_NAME="App-template"
+      #     LT_NAME="App-template"
 
-          USER_DATA=$(echo '#!/bin/bash
-          set -e
-          sudo yum update -y
-          sudo yum install -y python3 pip unzip awscli mariadb105-server nginx
+      #     USER_DATA=$(echo '#!/bin/bash
+      #     set -e
+      #     sudo yum update -y
+      #     sudo yum install -y python3 pip unzip awscli mariadb105-server nginx
 
-          systemctl enable nginx
-          systemctl start nginx
-          systemctl enable mariadb
-          systemctl start mariadb
+      #     systemctl enable nginx
+      #     systemctl start nginx
+      #     systemctl enable mariadb
+      #     systemctl start mariadb
 
-          SECRET_NAME="Saad-Secret1"
-          SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --query SecretString --output text)
-          DB_HOST=$(echo $SECRET_JSON | jq -r .DB_HOST)
-          DB_USER=$(echo $SECRET_JSON | jq -r .DB_USER) 
-          DB_PASS=$(echo $SECRET_JSON | jq -r .DB_PASS)
-          DB_NAME=$(echo $SECRET_JSON | jq -r .DB_NAME)
+      #     SECRET_NAME="Saad-Secret123"
+      #     SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --query SecretString --output text)
+      #     DB_HOST=$(echo $SECRET_JSON | jq -r .DB_HOST)
+      #     DB_USER=$(echo $SECRET_JSON | jq -r .DB_USER) 
+      #     DB_PASS=$(echo $SECRET_JSON | jq -r .DB_PASS)
+      #     DB_NAME=$(echo $SECRET_JSON | jq -r .DB_NAME)
 
-          mysql -h $DB_HOST -u $DB_USER -p$DB_PASS -e "CREATE DATABASE IF NOT EXISTS $DB_NAME; USE $DB_NAME; CREATE TABLE IF NOT EXISTS items (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), quantity INT);"
+      #     mysql -h $DB_HOST -u $DB_USER -p$DB_PASS -e "CREATE DATABASE IF NOT EXISTS $DB_NAME; USE $DB_NAME; CREATE TABLE IF NOT EXISTS items (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), quantity INT);"
 
-          LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk "{print \$4}")
-          aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/app.zip
+      #     LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk "{print \$4}")
+      #     aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/app.zip
 
-          cd /home/ec2-user
-          unzip -o app.zip
-          pip3 install flask pymysql boto3
-          nohup python3 app_lt.py > app.log 2>&1 &' | base64 -w 0)
+      #     cd /home/ec2-user
+      #     unzip -o app.zip
+      #     pip3 install flask pymysql boto3
+      #     nohup python3 app_lt.py > app.log 2>&1 &' | base64 -w 0)
 
-          JSON=$(jq -n --arg ud "$USER_DATA" '{UserData: $ud}')
+      #     JSON=$(jq -n --arg ud "$USER_DATA" '{UserData: $ud}')
 
-          aws ec2 create-launch-template-version \
-            --launch-template-name $LT_NAME \
-            --source-version '$Latest' \
-            --launch-template-data "$JSON"
-            
+      #     aws ec2 create-launch-template-version \
+      #       --launch-template-name $LT_NAME \
+      #       --source-version '$Latest' \
+      #       --launch-template-data "$JSON"
 
-      - name: Start Auto Scaling instance refresh
-        run: |
-          ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
-            --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'terraform-2025101310555256800000000b')].AutoScalingGroupName" \
-            --output text)
 
-          aws autoscaling start-instance-refresh \
-            --auto-scaling-group-name $ASG_NAME \
-            --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
+      # - name: Start Auto Scaling instance refresh
+      #   run: |
+      #     ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
+      #       --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'terraform-2025101310555256800000000b')].AutoScalingGroupName" \
+      #       --output text)
+
+      #     aws autoscaling start-instance-refresh \
+      #       --auto-scaling-group-name $ASG_NAME \
+      #       --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'

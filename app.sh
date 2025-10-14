@@ -11,7 +11,7 @@
 # sudo yum update -y
 # sudo yum install -y python3 pip unzip awscli
 
-# SECRET_NAME="Saad-Secret1"
+# SECRET_NAME="Saad-Secret123"
 # SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --query SecretString --output text)
 # DB_HOST=$(echo $SECRET_JSON | jq -r .DB_HOST)
 # DB_USER=$(echo $SECRET_JSON | jq -r .DB_USER)	# jq  reads JSON input and outputs structured data, When you add -r, it tells jq to output raw strings, not JSON. 
@@ -35,6 +35,15 @@
 # unzip -o app.zip
 # pip3 install flask pymysql boto3
 # nohup python3 app_lt.py > /home/ec2-user/app.log 2>&1 &
+
+
+
+
+
+
+
+
+
 
 # sudo yum update -y
 # sudo dnf install nginx -y
