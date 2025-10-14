@@ -34,6 +34,26 @@ def get_connection():
         cursorclass=pymysql.cursors.DictCursor
     )
 
+def init_db():
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cursor:
+                cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
+                cursor.execute(f"USE {DB_NAME}")
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS items (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        name VARCHAR(100),
+                        quantity INT
+                    )
+                """)
+                conn.commit()
+        print("Database and table verified/created successfully.")
+    except Exception as e:
+        print("Error initializing database:", e)
+        
+
 @app.route("/items", methods=["GET"])
 def get_items():
     conn = get_connection()

@@ -88,3 +88,16 @@
 
 # pip3 install -r requirements.txt
 # nohup python3 app_lt.py > app2.log 2>&1 &
+
+
+
+
+
+            # SECRET_NAME="Saad-Secret123"
+            # SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --query SecretString --output text)
+            # DB_HOST=$(echo $SECRET_JSON | jq -r .DB_HOST)
+            # DB_USER=$(echo $SECRET_JSON | jq -r .DB_USER) 
+            # DB_PASS=$(echo $SECRET_JSON | jq -r .DB_PASS)
+            # DB_NAME=$(echo $SECRET_JSON | jq -r .DB_NAME)
+
+            # mysql -h $DB_HOST -u $DB_USER -p$DB_PASS -e "CREATE DATABASE IF NOT EXISTS $DB_NAME; USE $DB_NAME; CREATE TABLE IF NOT EXISTS items (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), quantity INT);"
