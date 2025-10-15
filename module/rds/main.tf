@@ -16,6 +16,6 @@ resource "aws_db_instance" "this" {
   db_subnet_group_name   = var.db_subnet_group_name
 
   tags = {
-    Name = "${var.name}-db"
+    Name = "Saad-Rds"
   }
 }
