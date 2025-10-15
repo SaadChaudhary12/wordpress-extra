@@ -139,8 +139,8 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y jq
-          sudo dnf install -y python3 git
-          sudo dnf install -y python3-pip
+          sudo yum install -y python3 git
+          sudo yum install -y python3-pip
 
           LT_NAME="App-template"
 
@@ -148,6 +148,10 @@ jobs:
           set -e
           sudo yum update -y
           sudo yum install -y python3 pip unzip awscli mariadb105-server nginx
+
+          if [ ! -d "wordpress-extra" ]; then
+              git clone https://github.com/SaadChaudhary12/wordpress-extra.git
+          fi
 
 
           LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk "{print \$4}")
