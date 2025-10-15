@@ -139,15 +139,14 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y jq
-          sudo yum install -y python3 git
-          sudo yum install -y python3-pip
 
           LT_NAME="App-template"
 
           USER_DATA=$(echo '#!/bin/bash
           set -e
           sudo yum update -y
-          sudo yum install -y python3 pip unzip awscli mariadb105-server nginx
+          sudo yum install -y python3 git
+          pip install -r requirements.txt
 
           if [ ! -d "wordpress-extra" ]; then
               git clone https://github.com/SaadChaudhary12/wordpress-extra.git
