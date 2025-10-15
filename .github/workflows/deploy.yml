@@ -139,6 +139,8 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y jq
+          sudo dnf install -y python3 git
+          sudo dnf install -y python3-pip
 
           LT_NAME="App-template"
 
