@@ -145,8 +145,15 @@ jobs:
           USER_DATA=$(echo '#!/bin/bash
           set -e
           sudo yum update -y
-          sudo yum install -y python3 pip unzip awscli
-          aws s3 cp s3://terraform-bucket-test20/$ZIP_NAME /home/ec2-user/app.zip
+          sudo yum install -y python3 pip unzip awscli mariadb105-server nginx
+
+          systemctl enable nginx
+          systemctl start nginx
+          systemctl enable mariadb
+          systemctl start mariadb
+
+          LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk "{print \$4}")
+          aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/app.zip
 
           cd /home/ec2-user
           unzip -o app.zip
