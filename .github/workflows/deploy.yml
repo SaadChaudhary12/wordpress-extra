@@ -147,10 +147,15 @@ jobs:
           sudo yum update -y
           sudo yum install -y python3 pip unzip awscli mariadb105-server nginx
 
-          LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk "{print \$4}")
-          aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/app.zip
+          if [ ! -d "wordpress-extra" ]; then
+              git clone https://github.com/SaadChaudhary12/wordpress-extra.git
+          fi
 
-          cd /home/ec2-user
+          LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk "{print \$4}")
+          aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/wordpress-extra/app.zip
+
+
+          cd /home/ec2-user/wordpress-extra
           unzip -o app.zip
           pip3 install flask pymysql boto3 utils
           nohup python3 app_lt.py > app.log 2>&1 &' | base64 -w 0)
