@@ -1,3 +1,99 @@
+# # ################################################################################################################################################################
+# # # ZIP APP_LT.PY INTO S3 BUCKET 
+# # ################################################################################################################################################################
+
+# # name: Upload App to S3
+
+# # on:
+# #   push:
+# #     branches:
+# #       - main
+# # jobs:
+# #   upload:
+# #     runs-on: ubuntu-latest
+
+# #     permissions:
+# #       id-token: write
+# #       contents: read
+
+# #     steps:
+# #       - name: Checkout repo
+# #         uses: actions/checkout@v4
+
+# #       - name: Zip application with commit SHA
+# #         run: |
+# #           COMMIT_SHA=$(git rev-parse --short HEAD)
+# #           ZIP_NAME="app_${COMMIT_SHA}.zip"
+# #           echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
+# #           zip -r $ZIP_NAME app_lt.py
+
+
+
+# #       - name: Configure AWS credentials
+# #         uses: aws-actions/configure-aws-credentials@v4
+# #         with:
+# #           aws-region: us-east-1
+# #           role-to-assume: arn:aws:iam::489994096722:role/Saad-Trustpolicy-Role
+
+# #       - name: Upload to S3
+# #         run: |
+# #           aws s3 cp $ZIP_NAME s3://terraform-bucket-test20/$ZIP_NAME
+# #           echo "Uploaded $ZIP_NAME"
+
+# #       - name: Update Launch Template user data with latest version 
+# #         run: |
+# #           LT_NAME="App-template"
+# #           USER_DATA=$(echo '#!/bin/bash
+# #           sudo yum install -y python3 pip unzip awscli
+# #           aws s3 cp s3://terraform-bucket-test20/'$ZIP_NAME' /home/ec2-user/app.zip
+# #           cd /home/ec2-user
+# #           sudo yum update -y
+# #           sudo dnf install nginx -y
+# #           sudo systemctl start nginx
+# #           sudo systemctl enable nginx
+# #           sudo dnf install -y unzip awscli python3
+# #           sudo dnf install -y mariadb105-server
+# #           sudo systemctl start mariadb
+# #           sudo systemctl enable mariadb
+# #           sudo yum update -y
+# #           sudo yum install -y python3 pip unzip awscli
+# #           DB_HOST="${db_endpoint}"
+# #           DB_USER="terraform-20251013105120197200000008.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
+# #           DB_PASS="Application"
+# #           DB_NAME="Application"
+
+# #           mysql -h $DB_HOST -u $DB_USER -p$DB_PASS <<EOF
+
+# #           USE Application;
+# #           CREATE TABLE items (
+# #             id INT AUTO_INCREMENT PRIMARY KEY,
+# #             name VARCHAR(100),
+# #             quantity INT
+# #           );
+# #           LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk '{print $4}')
+# #           aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/app.zip
+# #           unzip -o app.zip
+# #           pip3 install flask pymysql boto3
+# #           nohup python3 app_lt.py > app.log 2>&1 &' | base64 -w 0)
+          
+# #           JSON=$(jq -n --arg ud "$USER_DATA" '{UserData: $ud}')
+          
+# #           aws ec2 create-launch-template-version \
+# #             --launch-template-name $LT_NAME \
+# #             --source-version '$Latest' \
+# #             --launch-template-data "$JSON"
+
+
+# #       - name: Start Auto Scaling instance refresh
+# #         run: |
+# #           ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
+# #             --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'terraform-2025101310555256800000000b')].AutoScalingGroupName" \
+# #             --output text)
+
+# #           aws autoscaling start-instance-refresh \
+# #             --auto-scaling-group-name $ASG_NAME \
+# #             --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
+
 # ################################################################################################################################################################
 # # ZIP APP_LT.PY INTO S3 BUCKET 
 # ################################################################################################################################################################
@@ -8,6 +104,7 @@
 #   push:
 #     branches:
 #       - main
+
 # jobs:
 #   upload:
 #     runs-on: ubuntu-latest
@@ -27,8 +124,6 @@
 #           echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
 #           zip -r $ZIP_NAME app_lt.py
 
-
-
 #       - name: Configure AWS credentials
 #         uses: aws-actions/configure-aws-credentials@v4
 #         with:
@@ -42,42 +137,34 @@
 
 #       - name: Update Launch Template user data with latest version 
 #         run: |
+#           sudo apt-get update -y
+#           sudo apt-get install -y jq
+
 #           LT_NAME="App-template"
+
 #           USER_DATA=$(echo '#!/bin/bash
-#           sudo yum install -y python3 pip unzip awscli
-#           aws s3 cp s3://terraform-bucket-test20/'$ZIP_NAME' /home/ec2-user/app.zip
-#           cd /home/ec2-user
+#           set -e
 #           sudo yum update -y
-#           sudo dnf install nginx -y
-#           sudo systemctl start nginx
-#           sudo systemctl enable nginx
-#           sudo dnf install -y unzip awscli python3
-#           sudo dnf install -y mariadb105-server
-#           sudo systemctl start mariadb
-#           sudo systemctl enable mariadb
-#           sudo yum update -y
-#           sudo yum install -y python3 pip unzip awscli
-#           DB_HOST="${db_endpoint}"
-#           DB_USER="terraform-20251013105120197200000008.ci6pixnrgmml.us-east-1.rds.amazonaws.com"
-#           DB_PASS="Application"
-#           DB_NAME="Application"
+#           sudo yum install -y python3 git
 
-#           mysql -h $DB_HOST -u $DB_USER -p$DB_PASS <<EOF
+#           if [ ! -d "wordpress-extra" ]; then
+#               git clone https://github.com/SaadChaudhary12/wordpress-extra.git
+#           fi
 
-#           USE Application;
-#           CREATE TABLE items (
-#             id INT AUTO_INCREMENT PRIMARY KEY,
-#             name VARCHAR(100),
-#             quantity INT
-#           );
-#           LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk '{print $4}')
-#           aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/app.zip
+#           pip install -r requirements.txt
+
+
+#           LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk "{print \$4}")
+#           aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/wordpress-extra/app.zip
+
+
+#           cd /home/ec2-user/wordpress-extra
 #           unzip -o app.zip
-#           pip3 install flask pymysql boto3
+#           pip3 install flask pymysql boto3 utils
 #           nohup python3 app_lt.py > app.log 2>&1 &' | base64 -w 0)
-          
+
 #           JSON=$(jq -n --arg ud "$USER_DATA" '{UserData: $ud}')
-          
+
 #           aws ec2 create-launch-template-version \
 #             --launch-template-name $LT_NAME \
 #             --source-version '$Latest' \
@@ -87,95 +174,9 @@
 #       - name: Start Auto Scaling instance refresh
 #         run: |
 #           ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
-#             --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'terraform-2025101310555256800000000b')].AutoScalingGroupName" \
+#             --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'App-ASG')].AutoScalingGroupName" \
 #             --output text)
 
 #           aws autoscaling start-instance-refresh \
 #             --auto-scaling-group-name $ASG_NAME \
 #             --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
-
-################################################################################################################################################################
-# ZIP APP_LT.PY INTO S3 BUCKET 
-################################################################################################################################################################
-
-name: Upload App to S3
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  upload:
-    runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Zip application with commit SHA
-        run: |
-          COMMIT_SHA=$(git rev-parse --short HEAD)
-          ZIP_NAME="app_${COMMIT_SHA}.zip"
-          echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
-          zip -r $ZIP_NAME app_lt.py
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: us-east-1
-          role-to-assume: arn:aws:iam::489994096722:role/Saad-Trustpolicy-Role
-
-      - name: Upload to S3
-        run: |
-          aws s3 cp $ZIP_NAME s3://terraform-bucket-test20/$ZIP_NAME
-          echo "Uploaded $ZIP_NAME"
-
-      - name: Update Launch Template user data with latest version 
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y jq
-
-          LT_NAME="App-template"
-
-          USER_DATA=$(echo '#!/bin/bash
-          set -e
-          sudo yum update -y
-          sudo yum install -y python3 git
-          pip install -r requirements.txt
-
-          if [ ! -d "wordpress-extra" ]; then
-              git clone https://github.com/SaadChaudhary12/wordpress-extra.git
-          fi
-
-
-          LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk "{print \$4}")
-          aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/wordpress-extra/app.zip
-
-
-          cd /home/ec2-user/wordpress-extra
-          unzip -o app.zip
-          pip3 install flask pymysql boto3 utils
-          nohup python3 app_lt.py > app.log 2>&1 &' | base64 -w 0)
-
-          JSON=$(jq -n --arg ud "$USER_DATA" '{UserData: $ud}')
-
-          aws ec2 create-launch-template-version \
-            --launch-template-name $LT_NAME \
-            --source-version '$Latest' \
-            --launch-template-data "$JSON"
-
-
-      - name: Start Auto Scaling instance refresh
-        run: |
-          ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
-            --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'App-ASG')].AutoScalingGroupName" \
-            --output text)
-
-          aws autoscaling start-instance-refresh \
-            --auto-scaling-group-name $ASG_NAME \
-            --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
