@@ -28,7 +28,7 @@ module "vpc" {
 
 module "rds" {
   source               = "./module/rds"
-  name                 = local.name
+  name                 = "Saad-Rds"
   allocated_storage    = local.storage
   engine               = local.engine
   engine_version       = local.engine_version
@@ -67,6 +67,7 @@ module "secrets_manager" {
 module "autoscaling" {
   source               = "./module/autoscaling"
   launch_template_name = "App-template"
+  asg_name             = "App-ASG"
   ami_id               = local.ami_id
   instance_type        = local.instance_type
   security_groups      = [aws_security_group.web_sg.id]

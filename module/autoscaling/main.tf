@@ -17,6 +17,7 @@ resource "aws_launch_template" "this" {
 }
 
 resource "aws_autoscaling_group" "this" {
+  name                = var.asg_name              
   desired_capacity    = var.desired_capacity
   max_size            = var.max_size
   min_size            = var.min_size

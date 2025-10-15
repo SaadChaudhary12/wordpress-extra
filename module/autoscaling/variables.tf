@@ -33,4 +33,10 @@ variable "iam_instance_profile_name" {
   type        = string
 }
 
+variable "asg_name" {
+  description = "Name of the Auto Scaling Group"
+  type        = string
+  default     = "my-custom-asg"
+}
+
 
