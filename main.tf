@@ -151,8 +151,8 @@ resource "aws_security_group" "web_sg" {
 
   ingress {
     description     = "from ALB"
-    from_port       = 8000
-    to_port         = 8000
+    from_port       = 3000
+    to_port         = 3000
     protocol        = "tcp"
     security_groups = [aws_security_group.lb_sg.id]
   }
