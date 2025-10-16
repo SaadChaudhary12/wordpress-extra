@@ -140,7 +140,7 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y jq
 
-          LT_NAME="App-template"
+          LT_NAME="Saad-App-template"
 
           USER_DATA=$(echo '#!/bin/bash
           set -e
