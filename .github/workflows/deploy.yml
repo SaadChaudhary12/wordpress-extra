@@ -143,19 +143,20 @@ jobs:
           LT_NAME="Saad-App-template"
 
           USER_DATA=$(echo '#!/bin/bash
-          set -e
           sudo yum update -y
           sudo yum install -y python3 git
-          pip install -r requirements.txt
+          sudo dnf install -y unzip awscli python3 pip awscli
+          sudo dnf install -y mariadb105-server
+          sudo systemctl start mariadb
+          sudo systemctl enable mariadb
 
 
           LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk "{print \$4}")
           aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/app.zip
 
-
-          cd /home/ec2-user/wordpress-extra
-          pip3 install flask pymysql boto3 utils awscli unzip pip python3
           unzip -o app.zip
+          pip3 install boto3 utils flask pymysql
+          cd /home/ec2-user/src
           nohup python3 app_lt.py > app.log 2>&1 &' | base64 -w 0)
 
           JSON=$(jq -n --arg ud "$USER_DATA" '{UserData: $ud}')
