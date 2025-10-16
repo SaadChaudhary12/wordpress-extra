@@ -122,7 +122,7 @@ jobs:
           COMMIT_SHA=$(git rev-parse --short HEAD)
           ZIP_NAME="app_${COMMIT_SHA}.zip"
           echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
-          zip -r $ZIP_NAME app_lt.py utils
+          zip -r $ZIP_NAME src
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -135,48 +135,42 @@ jobs:
           aws s3 cp $ZIP_NAME s3://terraform-bucket-test20/$ZIP_NAME
           echo "Uploaded $ZIP_NAME"
 
-      # - name: Update Launch Template user data with latest version 
-      #   run: |
-      #     sudo apt-get update -y
-      #     sudo apt-get install -y jq
+      - name: Update Launch Template user data with latest version 
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq
 
-      #     LT_NAME="App-template"
+          LT_NAME="App-template"
 
-      #     USER_DATA=$(echo '#!/bin/bash
-      #     set -e
-      #     sudo yum update -y
-      #     sudo yum install -y python3 git
-
-      #     if [ ! -d "wordpress-extra" ]; then
-      #         git clone https://github.com/SaadChaudhary12/wordpress-extra.git
-      #     fi
-
-      #     pip install -r requirements.txt
+          USER_DATA=$(echo '#!/bin/bash
+          set -e
+          sudo yum update -y
+          sudo yum install -y python3 git
+          pip install -r requirements.txt
 
 
-      #     LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk "{print \$4}")
-      #     aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/wordpress-extra/app.zip
+          LATEST_ZIP=$(aws s3 ls s3://terraform-bucket-test20/ --recursive | sort | tail -n 1 | awk "{print \$4}")
+          aws s3 cp s3://terraform-bucket-test20/$LATEST_ZIP /home/ec2-user/app.zip
 
 
-      #     cd /home/ec2-user/wordpress-extra
-      #     unzip -o app.zip
-      #     pip3 install flask pymysql boto3 utils
-      #     nohup python3 app_lt.py > app.log 2>&1 &' | base64 -w 0)
+          cd /home/ec2-user/wordpress-extra
+          pip3 install flask pymysql boto3 utils awscli unzip pip python3
+          unzip -o app.zip
+          nohup python3 app_lt.py > app.log 2>&1 &' | base64 -w 0)
 
-      #     JSON=$(jq -n --arg ud "$USER_DATA" '{UserData: $ud}')
+          JSON=$(jq -n --arg ud "$USER_DATA" '{UserData: $ud}')
+          aws ec2 create-launch-template-version \
+            --launch-template-name $LT_NAME \
+            --source-version '$Latest' \
+            --launch-template-data "$JSON"
 
-      #     aws ec2 create-launch-template-version \
-      #       --launch-template-name $LT_NAME \
-      #       --source-version '$Latest' \
-      #       --launch-template-data "$JSON"
 
+      - name: Start Auto Scaling instance refresh
+        run: |
+          ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
+            --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'Saad-App-ASG')].AutoScalingGroupName" \
+            --output text)
 
-      # - name: Start Auto Scaling instance refresh
-      #   run: |
-      #     ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
-      #       --query "AutoScalingGroups[?contains(AutoScalingGroupName, 'App-ASG')].AutoScalingGroupName" \
-      #       --output text)
-
-      #     aws autoscaling start-instance-refresh \
-      #       --auto-scaling-group-name $ASG_NAME \
-      #       --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name $ASG_NAME \
+            --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'

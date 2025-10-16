@@ -35,3 +35,19 @@ resource "aws_autoscaling_group" "this" {
     propagate_at_launch = true
   }
 }
+
+resource "aws_autoscaling_policy" "cpu_target_tracking" {
+  name                   = "${var.asg_name}-cpu-tracking-policy"
+  policy_type            = "TargetTrackingScaling"
+  autoscaling_group_name = aws_autoscaling_group.this.name
+
+  target_tracking_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ASGAverageCPUUtilization"
+    }
+
+    target_value = 50.0
+  }
+}
+
+
